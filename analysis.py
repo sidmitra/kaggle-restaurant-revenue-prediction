@@ -1,6 +1,7 @@
 """
-TODO
-ISO map dimensionality reduction
+TODO:
+
+- ISO map dimensionality reduction
 """
 import time
 
@@ -32,29 +33,37 @@ def get_df(csv_file):
     df.drop('Open Date', axis=1, inplace=True)
 
     # TODO: convert to labels
-    df.drop('City', axis=1, inplace=True)
-    df.drop('City Group', axis=1, inplace=True)
-    df.drop('Type', axis=1, inplace=True)
+    # df.drop('City', axis=1, inplace=True)
+    # df.drop('City Group', axis=1, inplace=True)
+    # df.drop('Type', axis=1, inplace=True)
 
     # Remove revenue column
-    revenue = df['revenue']
-    df.drop('revenue', axis=1, inplace=True)
+    try:
+        revenue = df['revenue']
+        df.drop('revenue', axis=1, inplace=True)
+    except KeyError:
+        print "Cannot remove revenue column from {}".format(
+            csv_file)
+        revenue = None
 
     return df, revenue
 
 
-train, revenue = get_df('data/train.csv')
+def apply_pca():
+    pca = PCA(n_components=3)
+    print("Data shape", train.shape)
+    pca.fit(train)
+    train_reduced = pca.transform(train)
+    print("Reduced Data shape", train_reduced.shape)
+    plt.scatter(train_reduced[:, 0], train_reduced[:, 1],
+                cmap='RdYlBu')
+    plt.show()
+    # print("Meaning of the 2 components:")
+    # for component in pca.components_:
+    #     print(" + ".join("%.3f x %s" % (value, name)
+    #                      for value, name in zip(component,
+    #                                             iris.feature_names)))
 
-pca = PCA(n_components=3)
-print("Data shape", train.shape)
-pca.fit(train)
-train_reduced = pca.transform(train)
-print("Reduced Data shape", train_reduced.shape)
-plt.scatter(train_reduced[:, 0], train_reduced[:, 1],
-            cmap='RdYlBu')
-plt.show()
-# print("Meaning of the 2 components:")
-# for component in pca.components_:
-#     print(" + ".join("%.3f x %s" % (value, name)
-#                      for value, name in zip(component,
-#                                             iris.feature_names)))
+
+train, revenue = get_df('data/train.csv')
+test, _ = get_df('data/test.csv')
