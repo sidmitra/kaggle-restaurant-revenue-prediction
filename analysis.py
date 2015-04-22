@@ -2,18 +2,21 @@
 TODO:
 
 - ISO map dimensionality reduction
+- Elastic net
 """
 import time
 
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
-# import numpy as np
+import numpy as np
 import pandas as pd
 from sklearn import preprocessing
+from sklearn.cross_validation import train_test_split
 from sklearn.decomposition import PCA
-from sklearn.feature_extraction import DictVectorizer
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.feature_extraction import DictVectorizer
+from sklearn.metrics import mean_squared_error
 
 
 city_le = preprocessing.LabelEncoder()
@@ -60,6 +63,12 @@ def get_df(csv_file, is_training_set=True):
     return df, revenue
 
 
+def write_data(prediction, filename='output/out.csv'):
+    sub = pd.read_csv('data/sampleSubmission.csv')
+    sub['Prediction'] = prediction
+    sub.to_csv(filename, index=False)
+
+
 def apply_pca():
     pca = PCA(n_components=3)
     print("Data shape", train.shape)
@@ -71,18 +80,19 @@ def apply_pca():
     plt.show()
 
 
-def apply_random_forest(train, test, revenue):
+def apply_random_forest(train, test, train_predictions):
     model = RandomForestRegressor(n_estimators=200)
-    model.fit(train, revenue)
-    print model.feature_importances_
-    test_revenue = model.predict(test)
-
-    sub = pd.read_csv('data/sampleSubmission.csv')
-    sub['Prediction'] = test_revenue
-    sub.to_csv('output/random_forest.csv', index=False)
+    model.fit(train, train_predictions)
+    # print model.feature_importances_
+    test_predictions = model.predict(test)
+    return test_predictions
 
 
 if __name__ == "__main__":
     train, revenue = get_df('data/train.csv')
-    test, _ = get_df('data/test.csv', is_training_set=False)
-    apply_random_forest(train, test, revenue)
+    # test, _ = get_df('data/test.csv', is_training_set=False)
+
+    x_train, x_test, y_train, y_test = train_test_split(
+        train, revenue, test_size=0.4)
+    y_test_predicted = apply_random_forest(x_train, x_test, y_train)
+    print 'RMSE', np.sqrt(mean_squared_error(y_test_predicted, y_test))
