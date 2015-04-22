@@ -10,10 +10,14 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 # import numpy as np
 import pandas as pd
+from sklearn import preprocessing
 from sklearn.decomposition import PCA
 from sklearn.feature_extraction import DictVectorizer
 
 
+city_le = preprocessing.LabelEncoder()
+city_group_le = preprocessing.LabelEncoder()
+type_le = preprocessing.LabelEncoder()
 vec = DictVectorizer()
 
 
@@ -48,14 +52,19 @@ def get_df(csv_file, is_training_set=True):
     if is_training_set:
         revenue = df['revenue']
         df.drop('revenue', axis=1, inplace=True)
-        df = vec.fit_transform(
-            df[['City', 'City Group', 'Type']].T.to_dict().values()
-        ).todense()
+        city_le.fit(df['City'])
+        city_group_le.fit(df['City Group'])
+        type_le.fit(df['Type'])
+        df['City'] = city_le.transform(df['City'])
+        df['City Group'] = city_group_le.transform(df['City Group'])
+        df['Type'] = type_le.transform(df['Type'])
     else:
-        df = vec.transform(
-            df[['City', 'City Group', 'Type']].T.to_dict().values()
-        ).todense()
-    df = pd.DataFrame(df)
+        city_le.fit(df['City'])
+        city_group_le.fit(df['City Group'])
+        type_le.fit(df['Type'])
+        df['City'] = city_le.transform(df['City'])
+        df['City Group'] = city_group_le.transform(df['City Group'])
+        df['Type'] = type_le.transform(df['Type'])
 
     return df, revenue
 
@@ -72,4 +81,4 @@ def apply_pca():
 
 
 train, revenue = get_df('data/train.csv')
-# test, _ = get_df('data/test.csv')
+test, _ = get_df('data/test.csv', is_training_set=False)
