@@ -13,6 +13,7 @@ import pandas as pd
 from sklearn import preprocessing
 from sklearn.decomposition import PCA
 from sklearn.feature_extraction import DictVectorizer
+from sklearn.ensemble import RandomForestRegressor
 
 
 city_le = preprocessing.LabelEncoder()
@@ -34,18 +35,8 @@ def get_df(csv_file, is_training_set=True):
     df['Month'] = df['Open Date'].map(lambda x: x.tm_mon)
     df['Year'] = df['Open Date'].map(lambda x: x.tm_year)
 
-    # Convert to factors
-    # df['Day'] = df['Day'].astype(object)
-    # df['Month'] = df['Month'].astype(object)
-    # df['Year'] = df['Year'].astype(object)
-
     # Remove Open Date column
     df.drop('Open Date', axis=1, inplace=True)
-
-    # TODO: convert to labels
-    # df.drop('City', axis=1, inplace=True)
-    # df.drop('City Group', axis=1, inplace=True)
-    # df.drop('Type', axis=1, inplace=True)
 
     # Remove revenue column
     revenue = None
@@ -80,5 +71,18 @@ def apply_pca():
     plt.show()
 
 
-train, revenue = get_df('data/train.csv')
-test, _ = get_df('data/test.csv', is_training_set=False)
+def apply_random_forest(train, test, revenue):
+    model = RandomForestRegressor(n_estimators=200)
+    model.fit(train, revenue)
+    print model.feature_importances_
+    test_revenue = model.predict(test)
+
+    sub = pd.read_csv('data/sampleSubmission.csv')
+    sub['Prediction'] = test_revenue
+    sub.to_csv('output/random_forest.csv', index=False)
+
+
+if __name__ == "__main__":
+    train, revenue = get_df('data/train.csv')
+    test, _ = get_df('data/test.csv', is_training_set=False)
+    apply_random_forest(train, test, revenue)
