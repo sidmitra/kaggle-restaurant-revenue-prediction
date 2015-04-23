@@ -92,7 +92,8 @@ if __name__ == "__main__":
     train, revenue = get_df('data/train.csv')
     # test, _ = get_df('data/test.csv', is_training_set=False)
 
-    plt.scatter(revenue)
+    #plt.(range(0, 1000), revenue)
+    plt.hist(sorted(revenue))
     plt.show()
 
     x_train, x_test, y_train, y_test = train_test_split(
