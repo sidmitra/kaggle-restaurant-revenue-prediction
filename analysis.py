@@ -80,8 +80,8 @@ def apply_pca():
     plt.show()
 
 
-def apply_random_forest(train, test, train_predictions):
-    model = RandomForestRegressor(n_estimators=200)
+def apply_random_forest(train, test, train_predictions, n_estimators=200):
+    model = RandomForestRegressor(n_estimators=n_estimators)
     model.fit(train, train_predictions)
     # print model.feature_importances_
     test_predictions = model.predict(test)
@@ -92,7 +92,29 @@ if __name__ == "__main__":
     train, revenue = get_df('data/train.csv')
     # test, _ = get_df('data/test.csv', is_training_set=False)
 
+    plt.scatter(revenue)
+    plt.show()
+
     x_train, x_test, y_train, y_test = train_test_split(
-        train, revenue, test_size=0.4)
-    y_test_predicted = apply_random_forest(x_train, x_test, y_train)
-    print 'RMSE', np.sqrt(mean_squared_error(y_test_predicted, y_test))
+        train, revenue, test_size=0.8)
+
+    # min_rmse = 99999999999999999999999999
+    # min_n = None
+    # for n_estimators in range(1, 401):
+
+    #     y_test_predicted = apply_random_forest(
+    #         x_train, x_test, y_train, n_estimators=n_estimators)
+    #     rmse = np.sqrt(mean_squared_error(y_test_predicted, y_test))
+    #     print 'n_estimators: {0}, RMSE: {1}'.format(n_estimators, rmse)
+    #     if rmse < min_rmse:
+    #         min_rmse = rmse
+    #         min_n = n_estimators
+
+    # print min_rmse, min_n
+
+    y_test_predicted = apply_random_forest(
+        x_train, x_test, y_train, n_estimators=8)
+    #plt.scatter(y_test_predicted, y_test)
+    #plt.show()
+    # for i in range(0, len(y_test_predicted)):
+    #     print y_test[], y_test_predicted[i]
