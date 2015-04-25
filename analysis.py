@@ -1,8 +1,16 @@
 """
 TODO:
 
-- ISO map dimensionality reduction
+- dimensionality reduction
+    - ISo map
+    - TSNE
+    - PCA
 - Elastic net
+- Classification and then per class model? Ensemble?
+- neural net
+- gaussian mixture models
+- classification
+
 """
 import time
 
@@ -16,13 +24,16 @@ from sklearn.cross_validation import train_test_split
 from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.feature_extraction import DictVectorizer
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, accuracy_score
+from sklearn.cross_validation import cross_val_score
+from sklearn.grid_search import GridSearchCV
 
 
 city_le = preprocessing.LabelEncoder()
 city_group_le = preprocessing.LabelEncoder()
 type_le = preprocessing.LabelEncoder()
 vec = DictVectorizer()
+pca = PCA(0.95)
 
 
 def extract_date(value):
@@ -30,7 +41,7 @@ def extract_date(value):
     return value
 
 
-def get_df(csv_file, is_training_set=True):
+def get_df(csv_file, is_training_set=True, reduce_dim=False):
     df = pd.read_csv(csv_file, encoding="utf-8", index_col=0)
     # Split to year, month day
     df['Open Date'] = df['Open Date'].apply(extract_date)
@@ -52,6 +63,8 @@ def get_df(csv_file, is_training_set=True):
         df['City'] = city_le.transform(df['City'])
         df['City Group'] = city_group_le.transform(df['City Group'])
         df['Type'] = type_le.transform(df['Type'])
+        if reduce_dim:
+            df = pca.fit_transform(df)
     else:
         city_le.fit(df['City'])
         city_group_le.fit(df['City Group'])
@@ -59,6 +72,8 @@ def get_df(csv_file, is_training_set=True):
         df['City'] = city_le.transform(df['City'])
         df['City Group'] = city_group_le.transform(df['City Group'])
         df['Type'] = type_le.transform(df['Type'])
+        if reduce_dim:
+            df = pca.transform(df)
 
     return df, revenue
 
@@ -69,36 +84,26 @@ def write_data(prediction, filename='output/out.csv'):
     sub.to_csv(filename, index=False)
 
 
-def apply_pca():
-    pca = PCA(n_components=3)
-    print("Data shape", train.shape)
-    pca.fit(train)
-    train_reduced = pca.transform(train)
-    print("Reduced Data shape", train_reduced.shape)
-    plt.scatter(train_reduced[:, 0], train_reduced[:, 1],
-                cmap='RdYlBu')
-    plt.show()
-
-
-def apply_random_forest(train, test, train_predictions, n_estimators=30,
-                        max_depth=5):
-    model = RandomForestRegressor(n_estimators=n_estimators,
-                                  max_depth=max_depth)
-    model.fit(train, train_predictions)
-    # print model.feature_importances_
-    test_predictions = model.predict(test)
-    return test_predictions
+def calc_rmse(y_test, y_pred):
+    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+    print("RMSE: ", rmse)
+    return rmse
 
 
 if __name__ == "__main__":
     train, revenue = get_df('data/train.csv')
     test, _ = get_df('data/test.csv', is_training_set=False)
 
-    # x_train, x_test, y_train, y_test = train_test_split(
-    #     train, revenue, test_size=0.2)
+    X_train, X_test, y_train, y_test = train_test_split(train, revenue)
 
-    # y_test_predicted = apply_random_forest(
-    #     x_train, x_test, y_train)
-    revenue_predicted = apply_random_forest(
-        train, test, revenue)
-    write_data(revenue_predicted, filename='output/rf_nest30_maxd5.csv')
+    model = RandomForestRegressor(n_jobs=4, verbose=3)
+    parameters = {'n_estimators': range(1, 401),
+                  'max_depth': range(1, 101)}
+
+    clf = GridSearchCV(model, parameters)
+    clf.fit(X_train, y_train)
+    print clf.best_params_
+    print clf.score(X_train,y_train)
+
+    #y_pred = clf.predict(X_test)
+    #calc_rmse(y_test, y_pred)
