@@ -12,6 +12,7 @@ TODO:
 - classification
 
 """
+from datetime import datetime
 import time
 
 import matplotlib
@@ -37,14 +38,18 @@ pca = PCA(0.95)
 
 
 def extract_date(value):
-    value = time.strptime(value, "%m/%d/%Y")
-    return value
+    return time.strptime(value, "%m/%d/%Y")
+
+
+def years_since_1900(value):
+    return value.tm_year - 1900
 
 
 def get_df(csv_file, is_training_set=True, reduce_dim=False):
     df = pd.read_csv(csv_file, encoding="utf-8", index_col=0)
     # Split to year, month day
     df['Open Date'] = df['Open Date'].apply(extract_date)
+    df['YearsSince1900'] = df['Open Date'].apply(years_since_1900)
     df['Day'] = df['Open Date'].map(lambda x: x.tm_mday)
     df['Month'] = df['Open Date'].map(lambda x: x.tm_mon)
     df['Year'] = df['Open Date'].map(lambda x: x.tm_year)
@@ -90,20 +95,19 @@ def calc_rmse(y_test, y_pred):
     return rmse
 
 
-if __name__ == "__main__":
-    train, revenue = get_df('data/train.csv')
-    test, _ = get_df('data/test.csv', is_training_set=False)
+train, revenue = get_df('data/train.csv')
+test, _ = get_df('data/test.csv', is_training_set=False)
 
-    X_train, X_test, y_train, y_test = train_test_split(train, revenue)
+# X_train, X_test, y_train, y_test = train_test_split(train, revenue)
 
-    model = RandomForestRegressor(n_jobs=4, verbose=3)
-    parameters = {'n_estimators': range(1, 401),
-                  'max_depth': range(1, 101)}
+# model = RandomForestRegressor(n_jobs=4, verbose=3)
+# parameters = {'n_estimators': range(1, 401),
+#               'max_depth': range(1, 101)}
 
-    clf = GridSearchCV(model, parameters)
-    clf.fit(X_train, y_train)
-    print clf.best_params_
-    print clf.score(X_train,y_train)
+# clf = GridSearchCV(model, parameters)
+# clf.fit(X_train, y_train)
+# print clf.best_params_
+# print clf.score(X_train,y_train)
 
-    #y_pred = clf.predict(X_test)
-    #calc_rmse(y_test, y_pred)
+# #y_pred = clf.predict(X_test)
+# #calc_rmse(y_test, y_pred)
