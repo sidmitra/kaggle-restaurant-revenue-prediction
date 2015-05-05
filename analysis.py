@@ -1,16 +1,6 @@
 """
 TODO:
 
-- dimensionality reduction
-    - ISo map
-    - TSNE
-    - PCA
-- Elastic net
-- Classification and then per class model? Ensemble?
-- neural net
-- gaussian mixture models
-- classification
-
 """
 from datetime import datetime
 import time
